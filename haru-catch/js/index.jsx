@@ -4,7 +4,6 @@ import classNames from 'classnames'
 import { sample } from 'lodash'
 import '../style/main.scss'
 
-const testMode = false
 const UPDATE_TIME = 3000
 // 收集物设定
 const COLLECTION_DETAIL = [
@@ -13,18 +12,18 @@ const COLLECTION_DETAIL = [
     collected: false,
     running: false,
     random: { // 随机事件：随机开启 1 个
-      weekly: [3, 4, 6],
+      weekly: [3, 4, 0],
       hour: [19, 20, 21, 22, 23, 0, 1, 2, 3, 4]
     },
-    const: {},
+    constant: {},
   },
   {
     key: 'light',
     collected: false,
     running: false,
     random: {},
-    const: { // 常驻事件：必定开启
-      hour: [19, 20, 21, 22, 23, 0, 1, 2, 3, 10, 11]
+    constant: { // 常驻事件：必定开启
+      hour: [19, 20, 21, 22, 23, 0, 1, 2, 3]
     }
   }
 ]
@@ -38,20 +37,13 @@ const now = () => {
 }
 
 const getMaskOpacity = (maskKey) => {
-  if (testMode) {
-    return 1
-  }
   const opacityObj = {
     // 天黑的时间
     dark: {
-      '1': [20, 21, 22, 23, 0, 1, 2, 3, 11],
+      '1': [20, 21, 22, 23, 0, 1, 2, 3],
       '0.5': [4, 18],
       '0.7': [5, 19]
     },
-    // 路灯亮起的时间
-    light : {
-      '1': [19, 20, 21, 22, 23, 0, 1, 2, 3, 11],
-    }
   }
   for (const [key, value] of Object.entries(opacityObj[maskKey])) {
     if (value.includes(now().hour)) {
@@ -60,14 +52,21 @@ const getMaskOpacity = (maskKey) => {
   }
   return 0
 }
-const collectionKeys = JSON.parse(localStorage.getItem('haru-collections') || '[]')
+const collectionKeys = () => JSON.parse(localStorage.getItem('haru-collections') || '[]')
 
 const collectionReducer = (state, action) => {
   const tempCollections = JSON.parse(JSON.stringify(state))
     switch (action.type) {
+      case 'init':
+        // 每次重置数据
+        return COLLECTION_DETAIL
       case 'run':
         tempCollections.forEach((item) => {
-          item.running = false
+          // 常驻事件不变，随机事件全部置为 false 并开启新的随机事件
+          if (JSON.stringify(item.constant) === '{}' && item.running === true) {
+            item.running = false
+          }
+          console.log(item.key, action.payload)
           if (item.key === action.payload) {
             if (item.collected === false) {
               item.collected = true
@@ -75,6 +74,7 @@ const collectionReducer = (state, action) => {
             item.running = true
           }
         })
+        console.log(tempCollections, 'tempCollections')
         return tempCollections
       case 'collected':
         tempCollections.forEach((item) => {
@@ -91,8 +91,7 @@ const collectionReducer = (state, action) => {
 const Haru = () => {
   // 以下是常驻事件
   const [darkMaskOpacity, setDarkMaskOpacity] = React.useState(0)
-  const [lightMaskOpacity, setLightMaskOpacity] = React.useState(0) // 这个算是半随机事件 orz，为了说明收集机制
-  // 以下是随机事件，当前进行中的事件不超过 1 个
+  // 以下是随机事件，当前进行中的事件不超过 2 个
   const [modal, setModal] = useState('')
   const [collections, setCollections] = useReducer(collectionReducer, COLLECTION_DETAIL)
   const randomTimer = useRef(null)
@@ -105,63 +104,62 @@ const Haru = () => {
     if (!detail.collected) {
       detail.collected = true
       detail.running = true
-      if (!collectionKeys.includes(detail.key)) {
-        collectionKeys.push(detail.key)
-        localStorage.setItem('haru-collections', JSON.stringify(collectionKeys))
+      const keys = collectionKeys()
+      if (!keys.includes(detail.key)) {
+        keys.push(detail.key)
+        localStorage.setItem('haru-collections', JSON.stringify(keys))
         setModal(detail.key)
         // 更新数据
-        setCollections({type: 'run', payload: detail.key})
       }
     }
-
+    setCollections({type: 'run', payload: detail.key})
   }
-  useEffect(() => {
+  const updateState = () => {
     const tempCollections = JSON.parse(JSON.stringify(collections))
     setDarkMaskOpacity(getMaskOpacity('dark'))
-    setLightMaskOpacity(getMaskOpacity('light'))
 
     // 更新收集列表信息
     tempCollections.forEach((item) => {
-      if (collectionKeys.includes(item.key)) {
+      if (collectionKeys().includes(item.key)) {
         setCollections({type: 'collected', payload: item.key})
       }
     })
-
+    setCollections({type: 'init'})
+    // 首先判断时间，是否切换白天黑夜
+    setDarkMaskOpacity(getMaskOpacity('dark'))
+    const tempNow = now()
+    // 先开启常驻事件
+    tempCollections.forEach((item) => {
+      const { hour, weekly } = item.constant
+      if (hour && hour.includes(tempNow.hour) && weekly && weekly.includes(tempNow.weekly)) {
+        runCollection(item)
+      }
+      if (hour && hour.includes(tempNow.hour) && !weekly) {
+        runCollection(item)
+      }
+      if (weekly && weekly.includes(tempNow.hour) && !hour) {
+        runCollection(item)
+      }
+    })
+    // 随机出现收集物
+    let aimSurprise = tempCollections.filter((item) => {
+      const { hour, weekly } = item.random
+      if (hour && hour.includes(tempNow.hour) && weekly && weekly.includes(tempNow.weekly)) {
+        return item
+      }
+      if (hour && hour.includes(tempNow.hour) && !weekly) {
+        return item
+      }
+      if (weekly && weekly.includes(tempNow.hour) && !hour) {
+        return item
+      }
+    })
+    runCollection(sample(aimSurprise))
+  }
+  useEffect(() => {
+    updateState()
     randomTimer.current = setInterval(() => {
-      // 首先判断时间，是否切换白天黑夜
-      setDarkMaskOpacity(getMaskOpacity('dark'))
-      setLightMaskOpacity(getMaskOpacity('light'))
-      const tempNow = now()
-      // 先开启常驻事件
-      tempCollections.forEach((item) => {
-        const { hour, weekly } = item.const
-        if (hour && hour.includes(tempNow.hour) && weekly && weekly.includes(tempNow.weekly)) {
-          runCollection(item)
-          return
-        }
-        if (hour && hour.includes(tempNow.hour) && !weekly) {
-          runCollection(item)
-          return
-        }
-        if (weekly && weekly.includes(tempNow.hour) && !hour) {
-          runCollection(item)
-          return
-        }
-      })
-      // 随机出现收集物
-      let aimSurprise = tempCollections.filter((item) => {
-        const { hour, weekly } = item.random
-        if (hour && hour.includes(tempNow.hour) && weekly && weekly.includes(tempNow.weekly)) {
-          return item
-        }
-        if (hour && hour.includes(tempNow.hour) && !weekly) {
-          return item
-        }
-        if (weekly && weekly.includes(tempNow.hour) && !hour) {
-          return item
-        }
-      })
-      runCollection(sample(aimSurprise))
+      updateState()
     }, UPDATE_TIME)
     return () => {
       clearInterval(randomTimer.current)
@@ -207,9 +205,8 @@ const Haru = () => {
         )}
       </div>
       <div className='game-view'>
-        { lightMaskOpacity && <div className='light-mask'></div> }
-        { darkMaskOpacity && <div className='dark-mask' style={{ opacity: darkMaskOpacity }}></div> }
-        { collections.map((item) => item.running && <div key={item.key} className={item.key}></div>) }
+        { collections.map((item) => item.running ? <div key={item.key} className={item.key}></div> : null) }
+        { darkMaskOpacity ? <div className='dark-mask' style={{ opacity: darkMaskOpacity }}></div> : null }
         <div className='background'></div>
       </div>
     </Fragment>

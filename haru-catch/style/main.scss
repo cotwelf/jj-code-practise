@@ -146,13 +146,6 @@ body {
     background-size: contain;
     background-position: center;
   }
-  .light-mask {
-    height: 200%;
-    background-image: url('../images/collections/light/light-mask.png');
-    mix-blend-mode: plus-lighter;
-    z-index: 2;
-    animation: 0.6s blink-change-2 step-end infinite;
-  }
   .dark-mask {
     height: 102%;
     background-image: url('../images/dark.png');
@@ -161,10 +154,18 @@ body {
     // animation: 0.6s blink-change-2 step-end infinite;
     top: 0;
   }
+
+  .light {
+    height: 200%;
+    background-image: url('../images/collections/light/light-mask.png');
+    mix-blend-mode: plus-lighter;
+    z-index: 2;
+    animation: 0.6s blink-change-2 step-end infinite;
+  }
   .rain {
     height: 200%;
     background-image: url('../images/collections/rain/ame-blue.png');
-    z-index: 1;
+    z-index: 3;
     animation: 0.6s blink-change-2 step-end infinite;
   }
   .background {
