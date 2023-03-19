@@ -1,0 +1,174 @@
+$view-width: 2480px;
+$view-height: 3508px;
+$list-btn-width: 200px;
+$list-btn-height: 90px;
+@mixin bg($url, $width: null, $height: $width) {
+  @if ($url) {
+    background: url('../images/#{$url}.png') no-repeat center / contain ;
+  }
+  @if ($width) {
+    width: $width;
+  }
+  @if ($height) {
+    height: $height;
+  }
+}
+body {
+  background-color: black;
+}
+#container {
+  width: 96vw;
+  height: 96vh;
+  min-width: 70vh;
+  position: relative;
+}
+@keyframes image-change-3 {
+  0% { top: 0; }
+  33% { top: -100%; }
+  66% { top: -200%; }
+  100% { top: 0; }
+}
+@keyframes image-change-2 {
+  0% { top: 0; }
+  50% { top: -100%; }
+  100% { top: 0; }
+}
+@keyframes blink-change-2 {
+  0% {
+    top: 0;
+    opacity: 1;
+  }
+  10% { opacity: 0.7; }
+  20% { opacity: 0.9; }
+  50% {
+    top: -100%;
+    opacity: 0.9;
+  }
+  80% { opacity: 0.9; }
+  100% {
+    top: 0;
+    opacity: 0.9;
+  }
+}
+.show-list-btn {
+  width: 89vh;
+  height: 20vh;
+  position: absolute;
+  right: 10vh;
+  bottom: 2vh;
+  &.btn-bg {
+    @include bg('btn/cat');
+    padding: 8vh 0;
+    right: 6vh;
+    bottom: -1vh;
+  }
+  &.btn-text {
+    @include bg('btn/text');
+    z-index: 8;
+    cursor: pointer;
+  }
+}
+
+.tip-modal {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  // transition: all 0.3s;
+  &.rain {
+    background: url('../images/collections/rain/tips.png') no-repeat center / contain ;
+  }
+  &.light {
+    @include bg('collections/light/tips')
+  }
+  &.list {
+    background: url('../images/collections/modal-bg.png') no-repeat center / contain ;
+    .collection-list {
+      width: 44vh;
+      height: 51vh;
+      position: absolute;
+      left: calc(50% - 21vh);
+      top: 17vh;
+      padding-top: 8vh;
+      > div {
+        z-index: 10;
+        opacity: 0.5;
+        cursor: pointer;
+        &::before {
+          content: '';
+          display: block;
+          @include bg('collections/null', 100%, 100%);
+        }
+        &.collected {
+          opacity: 1;
+          &::before {
+            display: none
+          }
+        }
+      }
+      .rain {
+        @include bg('collections/rain/icon', 10vh, 11vh);
+        position: absolute;
+        left: 10px;
+        transform: rotate(-3deg);
+      }
+      // 路灯
+      .light {
+        @include bg('collections/light/icon', 16vh, 27vh);
+        position: absolute;
+        left: 10vh;
+        top: 10vh;
+      }
+    }
+  }
+  &::after {
+    content: '';
+    display: block;
+    height: 100%;
+    background-color: black;
+    opacity: 0.8;
+    mix-blend-mode: color-dodge;
+  }
+  &.show {
+    opacity: 1;
+  }
+}
+.game-view {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  > div {
+    position: absolute;
+    width: 100%;
+    height: 200%;
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position: center;
+  }
+  .light-mask {
+    height: 200%;
+    background-image: url('../images/collections/light/light-mask.png');
+    mix-blend-mode: plus-lighter;
+    z-index: 2;
+    animation: 0.6s blink-change-2 step-end infinite;
+  }
+  .dark-mask {
+    height: 102%;
+    background-image: url('../images/dark/0.png');
+    mix-blend-mode: multiply;
+    z-index: 1;
+    top: 0;
+  }
+  .rain {
+    height: 200%;
+    background-image: url('../images/collections/rain/ame-blue.png');
+    z-index: 1;
+    animation: 0.6s blink-change-2 step-end infinite;
+  }
+  .background {
+    height: 300%;
+    background-image: url('../images/background.png');
+    animation: 1s image-change-3 step-end infinite;
+  }
+}
