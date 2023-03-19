@@ -1,4 +1,4 @@
-import React, { Fragment, useEffect, useRef, useState } from 'react'
+import React, { Fragment, useEffect, useRef, useState, useReducer } from 'react'
 import ReactDOM from 'react-dom/client'
 import classNames from 'classnames'
 import { sample } from 'lodash'
@@ -6,21 +6,10 @@ import '../style/main.scss'
 
 const testMode = false
 const UPDATE_TIME = 3000
-// 触发条件1：浏览器
-const ua = navigator.userAgent.toLowerCase()
-const browser = ua.match(/firefox\/([\d.]+)/)
-  ? 'firefox'
-  : ua.match(/chrome\/([\d.]+)/)
-  ? 'chrome'
-  : ua.match(/version\/([\d.]+).*safari/)
-  ? 'safari'
-  : ''
 // 收集物设定
 const COLLECTION_DETAIL = [
   {
     key: 'rain',
-    // browser: 'chrome',
-    // tips: 'Chrome 世界',
     collected: false,
     running: false,
     random: { // 随机事件：随机开启 1 个
@@ -35,7 +24,7 @@ const COLLECTION_DETAIL = [
     running: false,
     random: {},
     const: { // 常驻事件：必定开启
-      hour: [19, 20, 21, 22, 23, 0, 1, 2, 3]
+      hour: [19, 20, 21, 22, 23, 0, 1, 2, 3, 10, 11]
     }
   }
 ]
@@ -55,13 +44,13 @@ const getMaskOpacity = (maskKey) => {
   const opacityObj = {
     // 天黑的时间
     dark: {
-      '1': [20, 21, 22, 23, 0, 1, 2, 3],
+      '1': [20, 21, 22, 23, 0, 1, 2, 3, 11],
       '0.5': [4, 18],
       '0.7': [5, 19]
     },
     // 路灯亮起的时间
     light : {
-      '1': [19, 20, 21, 22, 23, 0, 1, 2, 3],
+      '1': [19, 20, 21, 22, 23, 0, 1, 2, 3, 11],
     }
   }
   for (const [key, value] of Object.entries(opacityObj[maskKey])) {
@@ -73,27 +62,46 @@ const getMaskOpacity = (maskKey) => {
 }
 const collectionKeys = JSON.parse(localStorage.getItem('haru-collections') || '[]')
 
+const collectionReducer = (state, action) => {
+  const tempCollections = JSON.parse(JSON.stringify(state))
+    switch (action.type) {
+      case 'run':
+        tempCollections.forEach((item) => {
+          item.running = false
+          if (item.key === action.payload) {
+            if (item.collected === false) {
+              item.collected = true
+            }
+            item.running = true
+          }
+        })
+        return tempCollections
+      case 'collected':
+        tempCollections.forEach((item) => {
+          if (item.key === action.payload) {
+            item.collected = true
+          }
+        })
+        return tempCollections
+      default:
+        throw new Error('something wrong about collectionReducer type')
+    }
+}
+
 const Haru = () => {
   // 以下是常驻事件
   const [darkMaskOpacity, setDarkMaskOpacity] = React.useState(0)
   const [lightMaskOpacity, setLightMaskOpacity] = React.useState(0) // 这个算是半随机事件 orz，为了说明收集机制
   // 以下是随机事件，当前进行中的事件不超过 1 个
-  const [collections, setCollections] = React.useState(COLLECTION_DETAIL) // 已收集列表
   const [modal, setModal] = useState('')
+  const [collections, setCollections] = useReducer(collectionReducer, COLLECTION_DETAIL)
   const randomTimer = useRef(null)
-  const updateCollectionDetail = (key, newObj) => {
-    const tempCollections = JSON.parse(JSON.stringify(collections))
-    tempCollections.forEach((item) => {
-      if (item.key === key) {
-        console.log({...item, ...newObj},'{...item, ...newObj}')
-        item = {...item, ...newObj}
-      }
-    })
-    setCollections(tempCollections)
-  }
+
   // 进行一个随机事件，可以随机，也可以通过已收集列表强制出现
   const runCollection = (detail) => {
-
+    if (!detail) {
+      return
+    }
     if (!detail.collected) {
       detail.collected = true
       detail.running = true
@@ -102,7 +110,7 @@ const Haru = () => {
         localStorage.setItem('haru-collections', JSON.stringify(collectionKeys))
         setModal(detail.key)
         // 更新数据
-        updateCollectionDetail(detail.key, detail)
+        setCollections({type: 'run', payload: detail.key})
       }
     }
 
@@ -114,10 +122,8 @@ const Haru = () => {
 
     // 更新收集列表信息
     tempCollections.forEach((item) => {
-      console.log(collectionKeys.includes(item.key),'collectionKeys.includes(item.key)')
       if (collectionKeys.includes(item.key)) {
-        item.collected = true
-        updateCollectionDetail(item.key, item)
+        setCollections({type: 'collected', payload: item.key})
       }
     })
 
@@ -156,7 +162,6 @@ const Haru = () => {
         }
       })
       runCollection(sample(aimSurprise))
-      console.log(aimSurprise, sample(aimSurprise),'sss')
     }, UPDATE_TIME)
     return () => {
       clearInterval(randomTimer.current)
@@ -165,8 +170,6 @@ const Haru = () => {
   }, [])
 
   const toggleModal = (e) => {
-    console.log(collections,'collections')
-
     if (modal !== 'list') {
       setModal('list')
       return
@@ -178,7 +181,7 @@ const Haru = () => {
   const showListModal = () => {
     setModal('list')
   }
-  const showDetail = (e, key, collected) => {
+  const showDetail = (e, key) => {
     e.stopPropagation()
     setModal(key)
   }
@@ -206,7 +209,7 @@ const Haru = () => {
       <div className='game-view'>
         { lightMaskOpacity && <div className='light-mask'></div> }
         { darkMaskOpacity && <div className='dark-mask' style={{ opacity: darkMaskOpacity }}></div> }
-        { collections.map((item) => <div key={item.key} className={item.key}></div>) }
+        { collections.map((item) => item.running && <div key={item.key} className={item.key}></div>) }
         <div className='background'></div>
       </div>
     </Fragment>
