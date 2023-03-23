@@ -4,7 +4,7 @@ import classNames from 'classnames'
 import { sample } from 'lodash'
 import '../style/main.scss'
 
-const UPDATE_TIME = 3000
+const UPDATE_TIME = 120000
 // 收集物设定
 const COLLECTION_DETAIL = [
   {
@@ -25,7 +25,54 @@ const COLLECTION_DETAIL = [
     constant: { // 常驻事件：必定开启
       hour: [19, 20, 21, 22, 23, 0, 1, 2, 3]
     }
-  }
+  },
+  {
+    key: 'mushi', // 和灯一同出现（概率
+    collected: false,
+    running: false,
+    random: {
+      hour: [19, 20, 21, 22, 23, 0, 1, 2, 3]
+    },
+    constant: {} // 常驻事件：必定开启
+
+  },
+  {
+    key: 'bird',
+    collected: false,
+    running: false,
+    random: { // 随机事件：随机开启 1 个
+      weekly: [1, 2, 4],
+      hour: [5, 6, 7, 8, 9, 10, 11, 12]
+    },
+    constant: {}, // 常驻事件：必定开启
+  },
+  {
+    key: 'sakura',
+    collected: false,
+    running: false,
+    random: { // 随机事件：随机开启 1 个
+      hour: [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
+    },
+    constant: {}, // 常驻事件：必定开启
+  },
+  {
+    key: 'danngo',
+    collected: false,
+    running: false,
+    random: { // 随机事件：随机开启 1 个
+      hour: [12, 13, 14, 15, 16, 17, 18]
+    },
+    constant: {}, // 常驻事件：必定开启
+  },
+  {
+    key: 'kite',
+    collected: false,
+    running: false,
+    random: { // 随机事件：随机开启 1 个
+      hour: [12, 13, 14, 15, 16, 17, 18]
+    },
+    constant: {}, // 常驻事件：必定开启
+  },
 ]
 // 一些关系到随机事件产生的变量们
 const now = () => {
@@ -66,7 +113,6 @@ const collectionReducer = (state, action) => {
           if (JSON.stringify(item.constant) === '{}' && item.running === true) {
             item.running = false
           }
-          console.log(item.key, action.payload)
           if (item.key === action.payload) {
             if (item.collected === false) {
               item.collected = true
@@ -74,7 +120,6 @@ const collectionReducer = (state, action) => {
             item.running = true
           }
         })
-        console.log(tempCollections, 'tempCollections')
         return tempCollections
       case 'collected':
         tempCollections.forEach((item) => {
@@ -115,16 +160,16 @@ const Haru = () => {
     setCollections({type: 'run', payload: detail.key})
   }
   const updateState = () => {
+    setCollections({ type: 'init' })
     const tempCollections = JSON.parse(JSON.stringify(collections))
     setDarkMaskOpacity(getMaskOpacity('dark'))
 
     // 更新收集列表信息
     tempCollections.forEach((item) => {
       if (collectionKeys().includes(item.key)) {
-        setCollections({type: 'collected', payload: item.key})
+        setCollections({ type: 'collected', payload: item.key })
       }
     })
-    setCollections({type: 'init'})
     // 首先判断时间，是否切换白天黑夜
     setDarkMaskOpacity(getMaskOpacity('dark'))
     const tempNow = now()
@@ -196,11 +241,11 @@ const Haru = () => {
       >
         {modal === 'list' && (
           <div className='collection-list'>
-            {collections.map((col) => <div
+            { collections.map((col) => <div
               key={col.key}
               className={classNames('detail', col.key, {collected: col.collected})}
               onClick={(e) => showDetail(e, col.key, col.collected)}
-            />)}
+            />) }
           </div>
         )}
       </div>

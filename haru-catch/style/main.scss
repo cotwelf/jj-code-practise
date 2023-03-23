@@ -69,6 +69,7 @@ body {
   }
 }
 
+// 弹窗
 .tip-modal {
   position: absolute;
   width: 100%;
@@ -76,10 +77,25 @@ body {
   opacity: 0;
   // transition: all 0.3s;
   &.rain {
-    background: url('../images/collections/rain/tips.png') no-repeat center / contain ;
+    @include bg('collections/rain/tips');
   }
   &.light {
-    @include bg('collections/light/tips')
+    @include bg('collections/light/tips');
+  }
+  &.bird {
+    @include bg('collections/bird/tips');
+  }
+  &.mushi {
+    @include bg('collections/mushi/tips');
+  }
+  &.sakura {
+    @include bg('collections/sakura/tips');
+  }
+  &.danngo {
+    @include bg('collections/danngo/tips');
+  }
+  &.kite {
+    @include bg('collections/kite/tips');
   }
   &.list {
     background: url('../images/collections/modal-bg.png') no-repeat center / contain ;
@@ -91,6 +107,7 @@ body {
       top: 17vh;
       padding-top: 8vh;
       > div {
+        position: absolute;
         z-index: 10;
         opacity: 0.5;
         cursor: pointer;
@@ -108,16 +125,39 @@ body {
       }
       .rain {
         @include bg('collections/rain/icon', 10vh, 11vh);
-        position: absolute;
         left: 10px;
         transform: rotate(-3deg);
       }
       // 路灯
       .light {
         @include bg('collections/light/icon', 16vh, 27vh);
-        position: absolute;
         left: 10vh;
         top: 10vh;
+      }
+      .bird {
+        @include bg('collections/bird/icon', 10vh, 12vh);
+        left: 28vh;
+        top: 10vh;
+      }
+      .mushi {
+        @include bg('collections/mushi/icon', 10vh, 12vh);
+        left: 4vh;
+        top: 30vh;
+      }
+      .sakura {
+        @include bg('collections/sakura/icon', 16vh);
+        left: 2vh;
+        top: 42vh;
+      }
+      .danngo {
+        @include bg('collections/danngo/icon', 16vh);
+        left: 24vh;
+        top: 42vh;
+      }
+      .kite {
+        @include bg('collections/kite/icon', 16vh);
+        left: 24vh;
+        top: 26vh;
       }
     }
   }
@@ -145,6 +185,7 @@ body {
     background-repeat: no-repeat;
     background-size: contain;
     background-position: center;
+    z-index: 3;
   }
   .dark-mask {
     height: 102%;
@@ -155,6 +196,7 @@ body {
     top: 0;
   }
 
+  // 动画
   .light {
     height: 200%;
     background-image: url('../images/collections/light/light-mask.png');
@@ -165,12 +207,37 @@ body {
   .rain {
     height: 200%;
     background-image: url('../images/collections/rain/ame-blue.png');
-    z-index: 3;
     animation: 0.6s blink-change-2 step-end infinite;
+  }
+  .bird {
+    height: 300%;
+    background-image: url('../images/collections/bird/anime.png');
+    animation: 0.5s image-change-3 step-end infinite;
+  }
+  .mushi {
+    height: 300%;
+    background-image: url('../images/collections/mushi/anime.png');
+    animation: 0.5s image-change-3 step-end infinite;
+  }
+  .sakura {
+    height: 300%;
+    background-image: url('../images/collections/sakura/anime.png');
+    animation: 0.5s image-change-3 step-end infinite;
+  }
+  .danngo {
+    height: 200%;
+    background-image: url('../images/collections/danngo/anime.png');
+    animation: 0.5s image-change-2 step-end infinite;
+  }
+  .kite {
+    height: 300%;
+    background-image: url('../images/collections/kite/anime.png');
+    animation: 0.5s image-change-3 step-end infinite;
   }
   .background {
     height: 300%;
     background-image: url('../images/background.png');
     animation: 1s image-change-3 step-end infinite;
+    z-index: 0;
   }
 }
