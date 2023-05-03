@@ -2,11 +2,11 @@
   "name": "jj-code-practise",
   "private": true,
   "version": "0.0.0",
-  "type": "module",
   "scripts": {
     "start": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "compress": "node sprites.js \"${npm_config_folder}\""
   },
   "dependencies": {
     "classnames": "^2.3.2",
@@ -14,7 +14,9 @@
     "phaser": "^3.55.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "sass": "^1.59.3"
+    "sass": "^1.59.3",
+    "spritesmith": "^3.4.1",
+    "tinify": "^1.7.1"
   },
   "devDependencies": {
     "@types/react": "^18.0.27",
