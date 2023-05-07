@@ -33,10 +33,13 @@ try {
       throw err
     }
     const output = `${__dirname}/${filedir}/sprites.png`
-    fs.writeFileSync(output, result.image)
-    result.coordinates, result.properties; // Coordinates and properties
-    // 生成精灵图再压缩一下，不然也有点大 orz
-    tinify.fromFile(output).toFile(output)
+    fs.writeFile(output, result.image, function(err) {
+      console.log(String(err), 'err')
+      if (String(err) === 'null') {
+        // 生成精灵图再压缩一下，不然也有点大 orz
+        tinify.fromFile(output).toFile(output)
+      }
+    })
   })
 } catch {
   if (!tinyFinished) {
